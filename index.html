@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title id="site-title">My Site</title>
+<meta name="description" id="site-desc" content="My personal website"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0e1a;--bg2:#111827;--bg3:#1e293b;--bg4:#0f172a;
+  --ac:#3b82f6;--ac2:#60a5fa;--gr:#10b981;--rd:#ef4444;--yl:#f59e0b;--pu:#8b5cf6;
+  --tx:#f1f5f9;--tx2:#94a3b8;--tx3:#475569;--bd:rgba(255,255,255,.08);
+  --font:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;
+  --r:12px;--r2:8px;
+  /* User customizable */
+  --u-primary:#3b82f6;--u-bg:#0a0e1a;--u-text:#f1f5f9;
+}
+html,body{min-height:100%;font-family:var(--font);background:var(--u-bg);color:var(--u-text)}
+
+/* ── EDIT BAR (only visible to owner) ── */
+#edit-bar{
+  position:fixed;bottom:0;left:0;right:0;z-index:9999;
+  background:rgba(15,23,42,.97);border-top:1px solid rgba(59,130,246,.3);
+  backdrop-filter:blur(12px);padding:10px 16px;
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  transform:translateY(100%);transition:.3s cubic-bezier(.4,0,.2,1);
+}
+#edit-bar.show{transform:translateY(0)}
+.eb-btn{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:7px 12px;border-radius:8px;font-size:12px;font-weight:500;
+  cursor:pointer;border:none;transition:.15s;white-space:nowrap;
+}
+.eb-primary{background:var(--ac);color:#fff}
+.eb-primary:hover{background:#2563eb}
+.eb-ghost{background:rgba(255,255,255,.08);color:var(--tx2);border:1px solid rgba(255,255,255,.1)}
+.eb-ghost:hover{color:var(--tx);background:rgba(255,255,255,.12)}
+.eb-danger{background:rgba(239,68,68,.15);color:#fca5a5;border:1px solid rgba(239,68,68,.2)}
+.eb-danger:hover{background:rgba(239,68,68,.25)}
+.eb-label{font-size:11px;color:rgba(59,130,246,.8);font-weight:600;letter-spacing:.05em}
+
+/* ── UNLOCK BUTTON ── */
+#unlock-btn{
+  position:fixed;bottom:16px;right:16px;z-index:9998;
+  width:44px;height:44px;border-radius:50%;
+  background:rgba(59,130,246,.2);border:1px solid rgba(59,130,246,.4);
+  color:#60a5fa;font-size:18px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:.2s;backdrop-filter:blur(8px);
+}
+#unlock-btn:hover{background:rgba(59,130,246,.35);transform:scale(1.05)}
+#unlock-btn.locked{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.1);color:var(--tx3)}
+
+/* ── MODAL ── */
+.modal-overlay{
+  position:fixed;inset:0;z-index:10000;
+  background:rgba(0,0,0,.7);backdrop-filter:blur(6px);
+  display:flex;align-items:center;justify-content:center;padding:20px;
+  opacity:0;pointer-events:none;transition:.2s;
+}
+.modal-overlay.show{opacity:1;pointer-events:all}
+.modal{
+  background:var(--bg2);border:1px solid var(--bd);
+  border-radius:16px;padding:24px;width:100%;max-width:480px;
+  max-height:90vh;overflow-y:auto;
+  transform:scale(.95);transition:.2s;
+}
+.modal-overlay.show .modal{transform:scale(1)}
+.modal-title{font-size:16px;font-weight:700;color:var(--tx);margin-bottom:4px}
+.modal-sub{font-size:12px;color:var(--tx3);margin-bottom:18px}
+.form-group{margin-bottom:14px}
+.form-label{font-size:11px;color:var(--tx2);font-weight:500;display:block;margin-bottom:5px}
+.form-input{
+  width:100%;background:rgba(0,0,0,.4);border:1px solid var(--bd);
+  border-radius:8px;color:var(--tx);font-size:13px;padding:10px 12px;
+  font-family:var(--font);outline:none;transition:.2s;
+}
+.form-input:focus{border-color:rgba(59,130,246,.5);box-shadow:0 0 0 3px rgba(59,130,246,.08)}
+textarea.form-input{resize:vertical;min-height:80px;font-family:var(--mono);font-size:12px;line-height:1.6}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}
+.tab-bar{display:flex;gap:0;border-bottom:1px solid var(--bd);margin-bottom:16px;overflow-x:auto}
+.m-tab{font-size:12px;padding:8px 14px;color:var(--tx3);cursor:pointer;border-bottom:2px solid transparent;transition:.15s;white-space:nowrap}
+.m-tab.on{color:var(--ac2);border-bottom-color:var(--ac)}
+.m-pane{display:none}.m-pane.on{display:block}
+.color-row{display:flex;gap:10px;align-items:center}
+.color-row input[type=color]{width:44px;height:36px;border:1px solid var(--bd);border-radius:6px;cursor:pointer;background:none;padding:2px}
+.section-card{
+  background:rgba(0,0,0,.3);border:1px solid var(--bd);
+  border-radius:8px;padding:12px;margin-bottom:10px;cursor:pointer;transition:.15s;
+}
+.section-card:hover{border-color:rgba(59,130,246,.3)}
+.section-card .sc-head{display:flex;justify-content:space-between;align-items:center}
+.section-card .sc-name{font-size:12px;font-weight:600;color:var(--tx)}
+.section-card .sc-type{font-size:10px;color:var(--tx3);background:rgba(59,130,246,.1);padding:2px 7px;border-radius:10px}
+.add-section-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.as-btn{
+  background:rgba(0,0,0,.3);border:1px solid var(--bd);border-radius:8px;
+  padding:10px;text-align:left;cursor:pointer;transition:.15s;
+}
+.as-btn:hover{border-color:rgba(59,130,246,.3);background:rgba(59,130,246,.05)}
+.as-icon{font-size:18px;margin-bottom:4px}
+.as-name{font-size:11px;font-weight:600;color:var(--tx)}
+.as-desc{font-size:10px;color:var(--tx3);margin-top:2px}
+
+/* ── SITE SECTIONS ── */
+/* Hero */
+.hero{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  text-align:center;padding:60px 20px;position:relative;overflow:hidden;
+}
+.hero::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 700px 500px at 50% 40%,rgba(59,130,246,.12),transparent 70%);
+  pointer-events:none;
+}
+.hero-badge{
+  display:inline-block;font-size:11px;font-weight:600;
+  padding:5px 14px;border-radius:20px;margin-bottom:20px;
+  background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.25);color:#93c5fd;
+}
+.hero h1{font-size:clamp(32px,7vw,72px);font-weight:800;line-height:1.1;color:var(--u-text);letter-spacing:-.03em;margin-bottom:16px}
+.hero h1 .accent{color:var(--u-primary)}
+.hero-sub{font-size:clamp(14px,2vw,18px);color:var(--tx2);max-width:540px;margin:0 auto 32px;line-height:1.7}
+.hero-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.btn-hero{padding:12px 28px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:.2s;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.btn-hero-primary{background:var(--u-primary);color:#fff}
+.btn-hero-primary:hover{opacity:.9;transform:translateY(-1px)}
+.btn-hero-ghost{background:rgba(255,255,255,.07);color:var(--tx);border:1px solid rgba(255,255,255,.12)}
+.btn-hero-ghost:hover{background:rgba(255,255,255,.12)}
+
+/* About */
+.about-section{padding:80px 20px;max-width:800px;margin:0 auto}
+.section-tag{font-size:11px;font-weight:600;color:var(--u-primary);letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px}
+.section-title{font-size:clamp(24px,4vw,36px);font-weight:700;color:var(--u-text);margin-bottom:14px;line-height:1.2}
+.section-body{font-size:14px;color:var(--tx2);line-height:1.8}
+.about-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:24px}
+.about-stat{background:rgba(255,255,255,.04);border:1px solid var(--bd);border-radius:10px;padding:16px}
+.about-stat-val{font-size:28px;font-weight:700;color:var(--u-primary)}
+.about-stat-lbl{font-size:12px;color:var(--tx3);margin-top:3px}
+
+/* Services */
+.services-section{padding:80px 20px;max-width:1000px;margin:0 auto}
+.services-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-top:28px}
+.service-card{
+  background:rgba(255,255,255,.03);border:1px solid var(--bd);
+  border-radius:12px;padding:20px;transition:.2s;
+}
+.service-card:hover{border-color:rgba(59,130,246,.3);transform:translateY(-2px)}
+.service-icon{font-size:28px;margin-bottom:12px}
+.service-name{font-size:14px;font-weight:600;color:var(--u-text);margin-bottom:6px}
+.service-desc{font-size:12px;color:var(--tx3);line-height:1.6}
+
+/* Portfolio */
+.portfolio-section{padding:80px 20px;max-width:1000px;margin:0 auto}
+.portfolio-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-top:28px}
+.portfolio-card{
+  background:rgba(255,255,255,.03);border:1px solid var(--bd);
+  border-radius:12px;overflow:hidden;transition:.2s;cursor:pointer;
+}
+.portfolio-card:hover{border-color:rgba(59,130,246,.3);transform:translateY(-2px)}
+.portfolio-thumb{height:140px;background:linear-gradient(135deg,rgba(59,130,246,.2),rgba(99,102,241,.2));display:flex;align-items:center;justify-content:center;font-size:36px}
+.portfolio-info{padding:14px}
+.portfolio-name{font-size:13px;font-weight:600;color:var(--u-text);margin-bottom:4px}
+.portfolio-desc{font-size:11px;color:var(--tx3);line-height:1.5}
+.portfolio-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
+.p-tag{font-size:10px;padding:2px 7px;border-radius:10px;background:rgba(59,130,246,.1);color:#93c5fd;border:1px solid rgba(59,130,246,.15)}
+
+/* Skills */
+.skills-section{padding:80px 20px;max-width:800px;margin:0 auto}
+.skills-list{margin-top:24px;display:flex;flex-direction:column;gap:14px}
+.skill-item{display:grid;grid-template-columns:120px 1fr 40px;align-items:center;gap:12px}
+.skill-name{font-size:12px;color:var(--tx2);font-weight:500}
+.skill-bar{height:6px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden}
+.skill-fill{height:100%;border-radius:3px;background:var(--u-primary);transition:.6s}
+.skill-pct{font-size:11px;color:var(--tx3);font-family:var(--mono);text-align:right}
+
+/* Contact */
+.contact-section{padding:80px 20px;max-width:600px;margin:0 auto;text-align:center}
+.contact-links{display:flex;flex-direction:column;gap:10px;margin-top:28px}
+.contact-link{
+  display:flex;align-items:center;gap:12px;padding:14px 18px;
+  background:rgba(255,255,255,.04);border:1px solid var(--bd);border-radius:10px;
+  text-decoration:none;color:var(--tx);transition:.2s;
+}
+.contact-link:hover{border-color:rgba(59,130,246,.3);background:rgba(59,130,246,.05)}
+.contact-link-icon{font-size:18px;width:32px;text-align:center}
+.contact-link-text{flex:1;text-align:left}
+.contact-link-label{font-size:12px;font-weight:500;color:var(--tx)}
+.contact-link-val{font-size:11px;color:var(--tx3);margin-top:2px}
+
+/* Custom HTML */
+.custom-section{padding:60px 20px;max-width:900px;margin:0 auto}
+
+/* Text section */
+.text-section{padding:60px 20px;max-width:720px;margin:0 auto}
+.text-section h2{font-size:28px;font-weight:700;color:var(--u-text);margin-bottom:12px}
+.text-section p{font-size:14px;color:var(--tx2);line-height:1.8;margin-bottom:12px}
+
+/* Footer */
+.site-footer{padding:32px 20px;text-align:center;border-top:1px solid var(--bd);color:var(--tx3);font-size:12px}
+.site-footer a{color:var(--u-primary);text-decoration:none}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:var(--bd);border-radius:4px}
+
+/* Toast */
+.toast{
+  position:fixed;top:16px;left:50%;transform:translateX(-50%) translateY(-60px);
+  z-index:99999;background:var(--bg3);border:1px solid rgba(16,185,129,.4);
+  color:var(--tx);padding:9px 18px;border-radius:8px;font-size:12px;font-weight:500;
+  transition:.25s;white-space:nowrap;
+}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+/* Editable element highlight */
+.edit-mode [data-editable]{
+  outline:2px dashed rgba(59,130,246,.4);outline-offset:2px;
+  cursor:pointer;border-radius:4px;transition:.2s;
+}
+.edit-mode [data-editable]:hover{outline-color:rgba(59,130,246,.8);background:rgba(59,130,246,.05)}
+
+@media(max-width:640px){
+  .about-grid{grid-template-columns:1fr 1fr}
+  .form-row{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- RENDERED SITE -->
+<div id="site-root"></div>
+
+<!-- UNLOCK BTN -->
+<button id="unlock-btn" onclick="toggleEditBar()" title="Edit site">✎</button>
+
+<!-- EDIT BAR -->
+<div id="edit-bar">
+  <span class="eb-label">EDIT MODE</span>
+  <button class="eb-btn eb-ghost" onclick="openModal('sections')">Sections</button>
+  <button class="eb-btn eb-ghost" onclick="openModal('design')">Design</button>
+  <button class="eb-btn eb-ghost" onclick="openModal('settings')">Settings</button>
+  <button class="eb-btn eb-ghost" onclick="openModal('domain')">Domain</button>
+  <button class="eb-btn eb-primary" onclick="saveSite()">Save</button>
+  <button class="eb-btn eb-danger" onclick="lockSite()">Lock</button>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">Saved!</div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this)closeModal()">
+<div class="modal" id="modal">
+
+<!-- LOGIN MODAL -->
+<div id="m-login">
+  <div class="modal-title">Site Editor</div>
+  <div class="modal-sub">Enter your password to edit this site</div>
+  <div class="form-group">
+    <label class="form-label">Password</label>
+    <input class="form-input" type="password" id="pw-input" placeholder="Enter password..." onkeydown="if(event.key==='Enter')tryLogin()"/>
+  </div>
+  <div id="pw-err" style="font-size:11px;color:#fca5a5;margin-bottom:10px;display:none">Wrong password</div>
+  <div class="modal-actions">
+    <button class="eb-btn eb-ghost" onclick="closeModal()">Cancel</button>
+    <button class="eb-btn eb-primary" onclick="tryLogin()">Unlock</button>
+  </div>
+</div>
+
+<!-- SECTIONS MODAL -->
+<div id="m-sections" style="display:none">
+  <div class="modal-title">Sections</div>
+  <div class="modal-sub">Manage and reorder your site sections</div>
+  <div id="sections-list"></div>
+  <div style="font-size:11px;font-weight:600;color:var(--tx3);margin-bottom:8px">Add New Section</div>
+  <div class="add-section-grid">
+    <button class="as-btn" onclick="addSection('hero')"><div class="as-icon">🦸</div><div class="as-name">Hero</div><div class="as-desc">Title + subtitle + buttons</div></button>
+    <button class="as-btn" onclick="addSection('about')"><div class="as-icon">👤</div><div class="as-name">About</div><div class="as-desc">About me / company</div></button>
+    <button class="as-btn" onclick="addSection('services')"><div class="as-icon">⚙</div><div class="as-name">Services</div><div class="as-desc">What you offer</div></button>
+    <button class="as-btn" onclick="addSection('portfolio')"><div class="as-icon">🗂</div><div class="as-name">Portfolio</div><div class="as-desc">Projects / work</div></button>
+    <button class="as-btn" onclick="addSection('skills')"><div class="as-icon">📊</div><div class="as-name">Skills</div><div class="as-desc">Skills with progress bars</div></button>
+    <button class="as-btn" onclick="addSection('contact')"><div class="as-icon">📬</div><div class="as-name">Contact</div><div class="as-desc">Contact links</div></button>
+    <button class="as-btn" onclick="addSection('text')"><div class="as-icon">📝</div><div class="as-name">Text Block</div><div class="as-desc">Title + paragraph</div></button>
+    <button class="as-btn" onclick="addSection('html')"><div class="as-icon">💻</div><div class="as-name">Custom HTML</div><div class="as-desc">Raw HTML injection</div></button>
+  </div>
+  <div class="modal-actions">
+    <button class="eb-btn eb-ghost" onclick="closeModal()">Close</button>
+  </div>
+</div>
+
+<!-- EDIT SECTION MODAL -->
+<div id="m-edit-section" style="display:none">
+  <div class="modal-title" id="es-title">Edit Section</div>
+  <div class="tab-bar" id="es-tabs"></div>
+  <div id="es-content"></div>
+  <div class="modal-actions">
+    <button class="eb-btn eb-danger" onclick="deleteCurrentSection()">Delete</button>
+    <button class="eb-btn eb-ghost" onclick="showSectionsModal()">Back</button>
+    <button class="eb-btn eb-primary" onclick="saveSection()">Save Section</button>
+  </div>
+</div>
+
+<!-- DESIGN MODAL -->
+<div id="m-design" style="display:none">
+  <div class="modal-title">Design Settings</div>
+  <div class="modal-sub">Customize colors, fonts, and appearance</div>
+  <div class="form-group">
+    <label class="form-label">Primary Color</label>
+    <div class="color-row">
+      <input type="color" id="d-primary" value="#3b82f6" oninput="previewDesign()"/>
+      <input class="form-input" id="d-primary-hex" value="#3b82f6" oninput="ge('d-primary').value=this.value;previewDesign()" style="flex:1"/>
+    </div>
+    <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+      <div style="width:24px;height:24px;border-radius:4px;background:#3b82f6;cursor:pointer;border:1px solid rgba(255,255,255,.1)" onclick="setColor('#3b82f6')"></div>
+      <div style="width:24px;height:24px;border-radius:4px;background:#8b5cf6;cursor:pointer;border:1px solid rgba(255,255,255,.1)" onclick="setColor('#8b5cf6')"></div>
+      <div style="width:24px;height:24px;border-radius:4px;background:#10b981;cursor:pointer;border:1px solid rgba(255,255,255,.1)" onclick="setColor('#10b981')"></div>
+      <div style="width:24px;height:24px;border-radius:4px;background:#f59e0b;cursor:pointer;border:1px solid rgba(255,255,255,.1)" onclick="setColor('#f59e0b')"></div>
+      <div style="width:24px;height:24px;border-radius:4px;background:#ef4444;cursor:pointer;border:1px solid rgba(255,255,255,.1)" onclick="setColor('#ef4444')"></div>
+      <div style="width:24px;height:24px;border-radius:4px;background:#ec4899;cursor:pointer;border:1px solid rgba(255,255,255,.1)" onclick="setColor('#ec4899')"></div>
+      <div style="width:24px;height:24px;border-radius:4px;background:#22d3ee;cursor:pointer;border:1px solid rgba(255,255,255,.1)" onclick="setColor('#22d3ee')"></div>
+      <div style="width:24px;height:24px;border-radius:4px;background:#f97316;cursor:pointer;border:1px solid rgba(255,255,255,.1)" onclick="setColor('#f97316')"></div>
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="form-label">Background Color</label>
+    <div class="color-row">
+      <input type="color" id="d-bg" value="#0a0e1a" oninput="previewDesign()"/>
+      <input class="form-input" id="d-bg-hex" value="#0a0e1a" style="flex:1"/>
+    </div>
+    <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+      <div style="width:24px;height:24px;border-radius:4px;background:#0a0e1a;cursor:pointer;border:1px solid rgba(255,255,255,.2)" onclick="setBG('#0a0e1a')"></div>
+      <div style="width:24px;height:24px;border-radius:4px;background:#0f172a;cursor:pointer;border:1px solid rgba(255,255,255,.1)" onclick="setBG('#0f172a')"></div>
+      <div style="width:24px;height:24px;border-radius:4px;background:#1a1a2e;cursor:pointer;border:1px solid rgba(255,255,255,.1)" onclick="setBG('#1a1a2e')"></div>
+      <div style="width:24px;height:24px;border-radius:4px;background:#111111;cursor:pointer;border:1px solid rgba(255,255,255,.1)" onclick="setBG('#111111')"></div>
+      <div style="width:24px;height:24px;border-radius:4px;background:#0d1117;cursor:pointer;border:1px solid rgba(255,255,255,.1)" onclick="setBG('#0d1117')"></div>
+      <div style="width:24px;height:24px;border-radius:4px;background:#ffffff;cursor:pointer;border:1px solid rgba(0,0,0,.2)" onclick="setBG('#ffffff')"></div>
+      <div style="width:24px;height:24px;border-radius:4px;background:#f8fafc;cursor:pointer;border:1px solid rgba(0,0,0,.1)" onclick="setBG('#f8fafc')"></div>
+    </div>
+  </div>
+  <div class="modal-actions">
+    <button class="eb-btn eb-ghost" onclick="closeModal()">Cancel</button>
+    <button class="eb-btn eb-primary" onclick="applyDesign()">Apply</button>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div id="m-settings" style="display:none">
+  <div class="modal-title">Site Settings</div>
+  <div class="tab-bar">
+    <div class="m-tab on" onclick="stTab(this,'st-general')">General</div>
+    <div class="m-tab" onclick="stTab(this,'st-seo')">SEO</div>
+    <div class="m-tab" onclick="stTab(this,'st-security')">Security</div>
+  </div>
+  <div class="m-pane on" id="st-general">
+    <div class="form-group"><label class="form-label">Site Title</label><input class="form-input" id="s-title" placeholder="My Awesome Site"/></div>
+    <div class="form-group"><label class="form-label">Your Name</label><input class="form-input" id="s-name" placeholder="NeX DeVe"/></div>
+    <div class="form-group"><label class="form-label">Tagline</label><input class="form-input" id="s-tagline" placeholder="Full Stack Developer"/></div>
+    <div class="form-group"><label class="form-label">Footer Text</label><input class="form-input" id="s-footer" placeholder="© 2026 My Site"/></div>
+  </div>
+  <div class="m-pane" id="st-seo">
+    <div class="form-group"><label class="form-label">Meta Description</label><textarea class="form-input" id="s-desc" placeholder="Brief description for search engines..." rows="3"></textarea></div>
+    <div class="form-group"><label class="form-label">Keywords</label><input class="form-input" id="s-keywords" placeholder="developer, web, bangladesh"/></div>
+  </div>
+  <div class="m-pane" id="st-security">
+    <div class="form-group"><label class="form-label">Current Password</label><input class="form-input" type="password" id="s-cur-pw" placeholder="Current password"/></div>
+    <div class="form-group"><label class="form-label">New Password</label><input class="form-input" type="password" id="s-new-pw" placeholder="New password (min 6 chars)"/></div>
+    <div class="form-group"><label class="form-label">Confirm New Password</label><input class="form-input" type="password" id="s-con-pw" placeholder="Confirm new password"/></div>
+    <div id="pw-change-msg" style="font-size:11px;margin-bottom:8px"></div>
+    <button class="eb-btn eb-primary" onclick="changePW()" style="width:100%">Change Password</button>
+  </div>
+  <div class="modal-actions">
+    <button class="eb-btn eb-ghost" onclick="closeModal()">Cancel</button>
+    <button class="eb-btn eb-primary" onclick="saveSettings()">Save Settings</button>
+  </div>
+</div>
+
+<!-- DOMAIN MODAL -->
+<div id="m-domain" style="display:none">
+  <div class="modal-title">Domain Configuration</div>
+  <div class="modal-sub">Connect your custom domain to this site</div>
+  <div style="background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.2);border-radius:8px;padding:14px;margin-bottom:16px;font-size:12px;color:var(--tx2);line-height:1.8">
+    <div style="font-weight:600;color:var(--ac2);margin-bottom:8px">Your GitHub Pages URL:</div>
+    <div style="font-family:var(--mono);color:var(--tx)" id="gh-pages-url">nexdeve.github.io/nexsite</div>
+  </div>
+  <div style="font-size:12px;font-weight:600;color:var(--tx);margin-bottom:10px">To use a custom domain:</div>
+  <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
+    <div style="background:rgba(0,0,0,.3);border:1px solid var(--bd);border-radius:8px;padding:12px">
+      <div style="font-size:10px;font-weight:600;color:var(--tx3);margin-bottom:6px">STEP 1 — Go to your domain registrar (Namecheap, GoDaddy, etc.)</div>
+      <div style="font-size:11px;color:var(--tx2)">Add a CNAME record:</div>
+      <div style="font-family:var(--mono);font-size:11px;background:rgba(0,0,0,.4);padding:8px 10px;border-radius:6px;margin-top:6px;color:var(--ac2)">Type: CNAME<br/>Host: www (or @)<br/>Value: nexdeve.github.io</div>
+    </div>
+    <div style="background:rgba(0,0,0,.3);border:1px solid var(--bd);border-radius:8px;padding:12px">
+      <div style="font-size:10px;font-weight:600;color:var(--tx3);margin-bottom:6px">STEP 2 — Create CNAME file in your repo</div>
+      <div style="font-size:11px;color:var(--tx2)">File name: <span style="font-family:var(--mono);color:var(--ac2)">CNAME</span> (no extension)</div>
+      <div style="font-size:11px;color:var(--tx2);margin-top:4px">File content: your domain (e.g. <span style="font-family:var(--mono);color:var(--ac2)">nexdeve.com</span>)</div>
+    </div>
+    <div style="background:rgba(0,0,0,.3);border:1px solid var(--bd);border-radius:8px;padding:12px">
+      <div style="font-size:10px;font-weight:600;color:var(--tx3);margin-bottom:6px">STEP 3 — GitHub Repo Settings</div>
+      <div style="font-size:11px;color:var(--tx2)">Go to: <span style="color:var(--ac2)">github.com/nexdeve/nexsite → Settings → Pages</span></div>
+      <div style="font-size:11px;color:var(--tx2);margin-top:4px">Enter your domain in "Custom domain" field → Save</div>
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="form-label">Your Domain (for CNAME file content)</label>
+    <input class="form-input" id="d-domain" placeholder="nexdeve.com"/>
+  </div>
+  <div class="modal-actions">
+    <button class="eb-btn eb-ghost" onclick="closeModal()">Close</button>
+    <button class="eb-btn eb-primary" onclick="copyCNAME()">Copy CNAME Content</button>
+  </div>
+</div>
+
+</div><!-- /modal -->
+</div><!-- /overlay -->
+
+<script>
+// ── STATE ────────────────────────────────────────────────────────────────────
+const DEFAULT_PW = 'nexdeve2026';
+const STORAGE_KEY = 'nexsite_data';
+let isUnlocked = false;
+let currentSectionIdx = -1;
+
+const DEFAULT_SITE = {
+  settings: {
+    title: 'NeX DeVe',
+    name: 'NeX DeVe',
+    tagline: 'Full Stack Developer',
+    footer: '© 2026 NeX DeVe · nexdeve.com',
+    desc: 'Full Stack Developer — Web, App & Any Tools. Bangladesh.',
+    keywords: 'developer, web, flutter, android, python, bangladesh',
+  },
+  design: { primary: '#3b82f6', bg: '#0a0e1a', text: '#f1f5f9' },
+  sections: [
+    {
+      id: s4(), type: 'hero',
+      data: {
+        badge: '🚀 Available for hire',
+        title: 'NeX DeVe',
+        titleAccent: '',
+        subtitle: 'Full Stack Developer crafting fast, secure & beautiful digital experiences. Web · App · Any Tools.',
+        btn1Text: 'View Work', btn1Link: '#portfolio',
+        btn2Text: 'Contact Me', btn2Link: '#contact',
+      }
+    },
+    {
+      id: s4(), type: 'about',
+      data: {
+        tag: 'About',
+        title: 'Who I Am',
+        body: 'I\'m a passionate Full Stack Developer based in Bangladesh. I build web apps, mobile apps, and anything in between. I love clean code, beautiful UI, and solving real problems with technology.',
+        stats: [
+          {val:'50+',lbl:'Projects Done'},
+          {val:'3+',lbl:'Years Experience'},
+          {val:'10k+',lbl:'GitHub Stars'},
+          {val:'100%',lbl:'Client Satisfaction'},
+        ]
+      }
+    },
+    {
+      id: s4(), type: 'services',
+      data: {
+        tag: 'Services',
+        title: 'What I Do',
+        items: [
+          {icon:'🌐',name:'Web Development',desc:'React, Next.js, Laravel, Node.js — fast and scalable web apps.'},
+          {icon:'📱',name:'Mobile Apps',desc:'Flutter & Android native apps for iOS and Android.'},
+          {icon:'🔐',name:'Backend & API',desc:'REST APIs, GraphQL, microservices, and secure backends.'},
+          {icon:'🤖',name:'AI Integration',desc:'OpenAI, chatbots, automation, and LLM-powered apps.'},
+        ]
+      }
+    },
+    {
+      id: s4(), type: 'portfolio',
+      data: {
+        tag: 'Portfolio',
+        title: 'Recent Work',
+        items: [
+          {icon:'🔐',name:'NexVPN',desc:'Android OpenVPN library','tags':['Java','Android'],'link':'https://github.com/nexdeve/nexvpn'},
+          {icon:'💙',name:'NexVPN Flutter',desc:'Flutter VPN plugin','tags':['Flutter','Dart'],'link':'https://github.com/nexdeve/nexvpn_flutter'},
+          {icon:'⚡',name:'NexTools',desc:'Developer toolkit','tags':['HTML','JS'],'link':'https://nexdeve.github.io/nextools'},
+        ]
+      }
+    },
+    {
+      id: s4(), type: 'skills',
+      data: {
+        tag: 'Skills',
+        title: 'Tech Stack',
+        items: [
+          {name:'React / Next.js',pct:92},
+          {name:'Flutter / Dart',pct:88},
+          {name:'Node.js / Laravel',pct:85},
+          {name:'Python',pct:80},
+          {name:'Android / Kotlin',pct:78},
+          {name:'PostgreSQL / MySQL',pct:82},
+          {name:'Docker / DevOps',pct:72},
+        ]
+      }
+    },
+    {
+      id: s4(), type: 'contact',
+      data: {
+        tag: 'Contact',
+        title: 'Get In Touch',
+        subtitle: 'Available for freelance, collaborations, and open-source contributions.',
+        links: [
+          {icon:'🌐',label:'Website',val:'nexdeve.com',href:'https://nexdeve.com'},
+          {icon:'💬',label:'Telegram',val:'t.me/+c34_uTIBJEpkZGM9',href:'https://t.me/+c34_uTIBJEpkZGM9'},
+          {icon:'💼',label:'GitHub',val:'github.com/nexdeve',href:'https://github.com/nexdeve'},
+        ]
+      }
+    }
+  ]
+};
+
+function s4(){return Math.random().toString(36).slice(2,10);}
+function ge(id){return document.getElementById(id);}
+
+// ── LOAD / SAVE ───────────────────────────────────────────────────────────────
+let siteData = (() => {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(DEFAULT_SITE));
+  } catch(e) {
+    return JSON.parse(JSON.stringify(DEFAULT_SITE));
+  }
+})();
+
+function saveSite(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(siteData));
+  toast('Site saved!');
+  renderSite();
+}
+
+function getPW(){return localStorage.getItem('nexsite_pw')||DEFAULT_PW;}
+
+// ── RENDER SITE ───────────────────────────────────────────────────────────────
+function renderSite(){
+  const {settings,design,sections} = siteData;
+  document.title = settings.title || 'My Site';
+  ge('site-title').textContent = settings.title;
+  ge('site-desc').setAttribute('content', settings.desc);
+  document.documentElement.style.setProperty('--u-primary', design.primary);
+  document.documentElement.style.setProperty('--u-bg', design.bg);
+  document.documentElement.style.setProperty('--u-text', design.text||'#f1f5f9');
+  document.body.style.background = design.bg;
+
+  const html = sections.map(s => renderSection(s)).join('') +
+    `<footer class="site-footer">${settings.footer||''} &nbsp;·&nbsp; Built with <a href="https://nexdeve.com" target="_blank">NexSite</a></footer>`;
+  ge('site-root').innerHTML = html;
+}
+
+function renderSection(s){
+  const d = s.data || {};
+  switch(s.type){
+    case 'hero': return `
+      <section class="hero" id="${s.id}">
+        ${d.badge?`<div class="hero-badge">${d.badge}</div>`:''}
+        <div>
+          <h1>${esc(d.title||'')}${d.titleAccent?` <span class="accent">${esc(d.titleAccent)}</span>`:''}</h1>
+          <p class="hero-sub">${esc(d.subtitle||'')}</p>
+          <div class="hero-btns">
+            ${d.btn1Text?`<a href="${d.btn1Link||'#'}" class="btn-hero btn-hero-primary">${esc(d.btn1Text)}</a>`:''}
+            ${d.btn2Text?`<a href="${d.btn2Link||'#'}" class="btn-hero btn-hero-ghost">${esc(d.btn2Text)}</a>`:''}
+          </div>
+        </div>
+      </section>`;
+    case 'about': return `
+      <section class="about-section" id="${s.id}">
+        ${d.tag?`<div class="section-tag">${esc(d.tag)}</div>`:''}
+        <h2 class="section-title">${esc(d.title||'')}</h2>
+        <p class="section-body">${esc(d.body||'')}</p>
+        ${d.stats?.length?`<div class="about-grid">${d.stats.map(st=>`<div class="about-stat"><div class="about-stat-val">${esc(st.val)}</div><div class="about-stat-lbl">${esc(st.lbl)}</div></div>`).join('')}</div>`:''}
+      </section>`;
+    case 'services': return `
+      <section class="services-section" id="${s.id}">
+        ${d.tag?`<div class="section-tag">${esc(d.tag)}</div>`:''}
+        <h2 class="section-title">${esc(d.title||'')}</h2>
+        <div class="services-grid">${(d.items||[]).map(it=>`
+          <div class="service-card">
+            <div class="service-icon">${it.icon||''}</div>
+            <div class="service-name">${esc(it.name||'')}</div>
+            <div class="service-desc">${esc(it.desc||'')}</div>
+          </div>`).join('')}</div>
+      </section>`;
+    case 'portfolio': return `
+      <section class="portfolio-section" id="${s.id}">
+        ${d.tag?`<div class="section-tag">${esc(d.tag)}</div>`:''}
+        <h2 class="section-title">${esc(d.title||'')}</h2>
+        <div class="portfolio-grid">${(d.items||[]).map(it=>`
+          <div class="portfolio-card" onclick="window.open('${it.link||'#'}','_blank')">
+            <div class="portfolio-thumb">${it.icon||'🚀'}</div>
+            <div class="portfolio-info">
+              <div class="portfolio-name">${esc(it.name||'')}</div>
+              <div class="portfolio-desc">${esc(it.desc||'')}</div>
+              <div class="portfolio-tags">${(it.tags||[]).map(t=>`<span class="p-tag">${esc(t)}</span>`).join('')}</div>
+            </div>
+          </div>`).join('')}</div>
+      </section>`;
+    case 'skills': return `
+      <section class="skills-section" id="${s.id}">
+        ${d.tag?`<div class="section-tag">${esc(d.tag)}</div>`:''}
+        <h2 class="section-title">${esc(d.title||'')}</h2>
+        <div class="skills-list">${(d.items||[]).map(sk=>`
+          <div class="skill-item">
+            <div class="skill-name">${esc(sk.name||'')}</div>
+            <div class="skill-bar"><div class="skill-fill" style="width:${sk.pct||0}%"></div></div>
+            <div class="skill-pct">${sk.pct||0}%</div>
+          </div>`).join('')}</div>
+      </section>`;
+    case 'contact': return `
+      <section class="contact-section" id="${s.id}">
+        ${d.tag?`<div class="section-tag">${esc(d.tag)}</div>`:''}
+        <h2 class="section-title">${esc(d.title||'')}</h2>
+        ${d.subtitle?`<p style="color:var(--tx2);font-size:13px;margin-bottom:4px">${esc(d.subtitle)}</p>`:''}
+        <div class="contact-links">${(d.links||[]).map(lk=>`
+          <a class="contact-link" href="${lk.href||'#'}" target="_blank">
+            <span class="contact-link-icon">${lk.icon||''}</span>
+            <div class="contact-link-text">
+              <div class="contact-link-label">${esc(lk.label||'')}</div>
+              <div class="contact-link-val">${esc(lk.val||'')}</div>
+            </div>
+            <span style="color:var(--tx3)">→</span>
+          </a>`).join('')}</div>
+      </section>`;
+    case 'text': return `
+      <section class="text-section" id="${s.id}">
+        <h2>${esc(d.title||'')}</h2>
+        ${(d.paragraphs||[]).map(p=>`<p>${esc(p)}</p>`).join('')}
+      </section>`;
+    case 'html': return `<div class="custom-section" id="${s.id}">${d.html||''}</div>`;
+    default: return '';
+  }
+}
+
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#x27;');}
+
+// ── AUTH ──────────────────────────────────────────────────────────────────────
+function toggleEditBar(){
+  if(isUnlocked){
+    ge('edit-bar').classList.toggle('show');
+  } else {
+    openModal('login');
+  }
+}
+
+function tryLogin(){
+  const pw = ge('pw-input').value;
+  if(pw === getPW()){
+    isUnlocked = true;
+    ge('pw-input').value = '';
+    ge('pw-err').style.display = 'none';
+    closeModal();
+    ge('edit-bar').classList.add('show');
+    ge('unlock-btn').textContent = '✎';
+    ge('unlock-btn').classList.remove('locked');
+    toast('Unlocked! You can now edit.');
+  } else {
+    ge('pw-err').style.display = 'block';
+    ge('pw-input').value = '';
+    ge('pw-input').focus();
+  }
+}
+
+function lockSite(){
+  isUnlocked = false;
+  ge('edit-bar').classList.remove('show');
+  ge('unlock-btn').classList.add('locked');
+  ge('unlock-btn').textContent = '🔒';
+  toast('Site locked.');
+}
+
+function changePW(){
+  const cur=ge('s-cur-pw').value, nw=ge('s-new-pw').value, con=ge('s-con-pw').value;
+  const msg=ge('pw-change-msg');
+  if(cur!==getPW()){msg.style.color='#fca5a5';msg.textContent='Current password is wrong.';return;}
+  if(nw.length<6){msg.style.color='#fca5a5';msg.textContent='New password must be at least 6 characters.';return;}
+  if(nw!==con){msg.style.color='#fca5a5';msg.textContent='Passwords do not match.';return;}
+  localStorage.setItem('nexsite_pw',nw);
+  msg.style.color='#6ee7b7';msg.textContent='Password changed successfully!';
+  ge('s-cur-pw').value=ge('s-new-pw').value=ge('s-con-pw').value='';
+}
+
+// ── MODALS ────────────────────────────────────────────────────────────────────
+function openModal(which){
+  ['m-login','m-sections','m-edit-section','m-design','m-settings','m-domain'].forEach(id=>ge(id).style.display='none');
+  ge('m-'+which).style.display='block';
+  ge('modal-overlay').classList.add('show');
+  if(which==='sections')renderSectionsList();
+  if(which==='settings')loadSettings();
+  if(which==='design'){ge('d-primary').value=siteData.design.primary;ge('d-primary-hex').value=siteData.design.primary;ge('d-bg').value=siteData.design.bg;ge('d-bg-hex').value=siteData.design.bg;}
+}
+
+function closeModal(){ge('modal-overlay').classList.remove('show');}
+
+function showSectionsModal(){
+  ['m-login','m-sections','m-edit-section','m-design','m-settings','m-domain'].forEach(id=>ge(id).style.display='none');
+  ge('m-sections').style.display='block';
+  renderSectionsList();
+}
+
+// ── SECTIONS ──────────────────────────────────────────────────────────────────
+function renderSectionsList(){
+  ge('sections-list').innerHTML = siteData.sections.map((s,i)=>`
+    <div class="section-card" onclick="editSection(${i})">
+      <div class="sc-head">
+        <span class="sc-name">${getSectionName(s)}</span>
+        <span class="sc-type">${s.type}</span>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:8px">
+        <button class="eb-btn eb-ghost" style="font-size:10px;padding:3px 8px" onclick="event.stopPropagation();moveSection(${i},-1)">▲</button>
+        <button class="eb-btn eb-ghost" style="font-size:10px;padding:3px 8px" onclick="event.stopPropagation();moveSection(${i},1)">▼</button>
+      </div>
+    </div>`).join('');
+}
+
+function getSectionName(s){
+  const d=s.data||{};
+  return d.title||d.name||s.type.charAt(0).toUpperCase()+s.type.slice(1);
+}
+
+function moveSection(i,dir){
+  const j=i+dir;
+  if(j<0||j>=siteData.sections.length)return;
+  [siteData.sections[i],siteData.sections[j]]=[siteData.sections[j],siteData.sections[i]];
+  renderSectionsList();
+}
+
+function addSection(type){
+  const defaults = {
+    hero:{badge:'New Section',title:'Title Here',subtitle:'Subtitle here',btn1Text:'CTA Button',btn1Link:'#'},
+    about:{tag:'About',title:'About Me',body:'Write about yourself here...'},
+    services:{tag:'Services',title:'Services',items:[{icon:'⚡',name:'Service 1',desc:'Description'}]},
+    portfolio:{tag:'Portfolio',title:'My Work',items:[{icon:'🚀',name:'Project 1',desc:'Description',tags:['Tag'],link:'#'}]},
+    skills:{tag:'Skills',title:'Skills',items:[{name:'Skill 1',pct:80}]},
+    contact:{tag:'Contact',title:'Contact',subtitle:'',links:[{icon:'🌐',label:'Website',val:'example.com',href:'https://example.com'}]},
+    text:{title:'Section Title',paragraphs:['Your paragraph here...']},
+    html:{html:'<p style="color:white;padding:20px">Your custom HTML here</p>'},
+  };
+  siteData.sections.push({id:s4(),type,data:defaults[type]||{}});
+  renderSectionsList();
+  toast('Section added!');
+}
+
+function editSection(i){
+  currentSectionIdx = i;
+  const s = siteData.sections[i];
+  ge('es-title').textContent = 'Edit: '+s.type.charAt(0).toUpperCase()+s.type.slice(1);
+  ge('m-sections').style.display='none';
+  ge('m-edit-section').style.display='block';
+  renderSectionEditor(s);
+}
+
+function renderSectionEditor(s){
+  const d = s.data||{};
+  let html = '';
+
+  if(s.type==='hero'){
+    html = `
+      <div class="form-group"><label class="form-label">Badge Text</label><input class="form-input" id="ef-badge" value="${esc2(d.badge||'')}"/></div>
+      <div class="form-group"><label class="form-label">Main Title</label><input class="form-input" id="ef-title" value="${esc2(d.title||'')}"/></div>
+      <div class="form-group"><label class="form-label">Title Accent (colored part)</label><input class="form-input" id="ef-accent" value="${esc2(d.titleAccent||'')}"/></div>
+      <div class="form-group"><label class="form-label">Subtitle</label><textarea class="form-input" id="ef-subtitle">${esc2(d.subtitle||'')}</textarea></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Button 1 Text</label><input class="form-input" id="ef-b1t" value="${esc2(d.btn1Text||'')}"/></div>
+        <div class="form-group"><label class="form-label">Button 1 Link</label><input class="form-input" id="ef-b1l" value="${esc2(d.btn1Link||'')}"/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Button 2 Text</label><input class="form-input" id="ef-b2t" value="${esc2(d.btn2Text||'')}"/></div>
+        <div class="form-group"><label class="form-label">Button 2 Link</label><input class="form-input" id="ef-b2l" value="${esc2(d.btn2Link||'')}"/></div>
+      </div>`;
+  } else if(s.type==='about'){
+    html = `
+      <div class="form-group"><label class="form-label">Tag</label><input class="form-input" id="ef-tag" value="${esc2(d.tag||'')}"/></div>
+      <div class="form-group"><label class="form-label">Title</label><input class="form-input" id="ef-title" value="${esc2(d.title||'')}"/></div>
+      <div class="form-group"><label class="form-label">Body Text</label><textarea class="form-input" id="ef-body" style="min-height:120px">${esc2(d.body||'')}</textarea></div>
+      <div class="form-group"><label class="form-label">Stats (val|label, one per line)</label>
+      <textarea class="form-input" id="ef-stats">${(d.stats||[]).map(s=>s.val+'|'+s.lbl).join('\n')}</textarea></div>`;
+  } else if(s.type==='services'){
+    html = `
+      <div class="form-group"><label class="form-label">Tag</label><input class="form-input" id="ef-tag" value="${esc2(d.tag||'')}"/></div>
+      <div class="form-group"><label class="form-label">Title</label><input class="form-input" id="ef-title" value="${esc2(d.title||'')}"/></div>
+      <div class="form-group"><label class="form-label">Services (icon|name|desc — one per line)</label>
+      <textarea class="form-input" id="ef-items" style="min-height:140px">${(d.items||[]).map(i=>i.icon+'|'+i.name+'|'+i.desc).join('\n')}</textarea></div>`;
+  } else if(s.type==='portfolio'){
+    html = `
+      <div class="form-group"><label class="form-label">Tag</label><input class="form-input" id="ef-tag" value="${esc2(d.tag||'')}"/></div>
+      <div class="form-group"><label class="form-label">Title</label><input class="form-input" id="ef-title" value="${esc2(d.title||'')}"/></div>
+      <div class="form-group"><label class="form-label">Projects (icon|name|desc|tag1,tag2|link — one per line)</label>
+      <textarea class="form-input" id="ef-items" style="min-height:140px">${(d.items||[]).map(i=>i.icon+'|'+i.name+'|'+i.desc+'|'+(i.tags||[]).join(',')+'|'+(i.link||'')).join('\n')}</textarea></div>`;
+  } else if(s.type==='skills'){
+    html = `
+      <div class="form-group"><label class="form-label">Tag</label><input class="form-input" id="ef-tag" value="${esc2(d.tag||'')}"/></div>
+      <div class="form-group"><label class="form-label">Title</label><input class="form-input" id="ef-title" value="${esc2(d.title||'')}"/></div>
+      <div class="form-group"><label class="form-label">Skills (name|percentage — one per line)</label>
+      <textarea class="form-input" id="ef-items" style="min-height:140px">${(d.items||[]).map(i=>i.name+'|'+i.pct).join('\n')}</textarea></div>`;
+  } else if(s.type==='contact'){
+    html = `
+      <div class="form-group"><label class="form-label">Tag</label><input class="form-input" id="ef-tag" value="${esc2(d.tag||'')}"/></div>
+      <div class="form-group"><label class="form-label">Title</label><input class="form-input" id="ef-title" value="${esc2(d.title||'')}"/></div>
+      <div class="form-group"><label class="form-label">Subtitle</label><input class="form-input" id="ef-subtitle" value="${esc2(d.subtitle||'')}"/></div>
+      <div class="form-group"><label class="form-label">Links (icon|label|display text|URL — one per line)</label>
+      <textarea class="form-input" id="ef-items" style="min-height:120px">${(d.links||[]).map(l=>l.icon+'|'+l.label+'|'+l.val+'|'+l.href).join('\n')}</textarea></div>`;
+  } else if(s.type==='text'){
+    html = `
+      <div class="form-group"><label class="form-label">Title</label><input class="form-input" id="ef-title" value="${esc2(d.title||'')}"/></div>
+      <div class="form-group"><label class="form-label">Paragraphs (one per line)</label>
+      <textarea class="form-input" id="ef-paras" style="min-height:160px">${(d.paragraphs||[]).join('\n')}</textarea></div>`;
+  } else if(s.type==='html'){
+    html = `
+      <div class="form-group"><label class="form-label">Custom HTML</label>
+      <textarea class="form-input" id="ef-html" style="min-height:220px;font-size:11px">${esc2(d.html||'')}</textarea></div>`;
+  }
+
+  ge('es-content').innerHTML = html;
+}
+
+function esc2(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+function saveSection(){
+  const s = siteData.sections[currentSectionIdx];
+  const d = s.data;
+  const gv = id => (ge(id)||{}).value||'';
+
+  if(s.type==='hero'){
+    d.badge=gv('ef-badge');d.title=gv('ef-title');d.titleAccent=gv('ef-accent');
+    d.subtitle=gv('ef-subtitle');d.btn1Text=gv('ef-b1t');d.btn1Link=gv('ef-b1l');
+    d.btn2Text=gv('ef-b2t');d.btn2Link=gv('ef-b2l');
+  } else if(s.type==='about'){
+    d.tag=gv('ef-tag');d.title=gv('ef-title');d.body=gv('ef-body');
+    d.stats=gv('ef-stats').split('\n').filter(Boolean).map(l=>{const[v,lb]=l.split('|');return{val:v||'',lbl:lb||''};});
+  } else if(s.type==='services'){
+    d.tag=gv('ef-tag');d.title=gv('ef-title');
+    d.items=gv('ef-items').split('\n').filter(Boolean).map(l=>{const[ic,n,de]=l.split('|');return{icon:ic||'',name:n||'',desc:de||''};});
+  } else if(s.type==='portfolio'){
+    d.tag=gv('ef-tag');d.title=gv('ef-title');
+    d.items=gv('ef-items').split('\n').filter(Boolean).map(l=>{const p=l.split('|');return{icon:p[0]||'',name:p[1]||'',desc:p[2]||'',tags:(p[3]||'').split(',').filter(Boolean),link:p[4]||''};});
+  } else if(s.type==='skills'){
+    d.tag=gv('ef-tag');d.title=gv('ef-title');
+    d.items=gv('ef-items').split('\n').filter(Boolean).map(l=>{const[n,p]=l.split('|');return{name:n||'',pct:+p||0};});
+  } else if(s.type==='contact'){
+    d.tag=gv('ef-tag');d.title=gv('ef-title');d.subtitle=gv('ef-subtitle');
+    d.links=gv('ef-items').split('\n').filter(Boolean).map(l=>{const p=l.split('|');return{icon:p[0]||'',label:p[1]||'',val:p[2]||'',href:p[3]||''};});
+  } else if(s.type==='text'){
+    d.title=gv('ef-title');d.paragraphs=gv('ef-paras').split('\n').filter(Boolean);
+  } else if(s.type==='html'){
+    d.html=gv('ef-html');
+  }
+
+  saveSite();
+  showSectionsModal();
+  toast('Section saved!');
+}
+
+function deleteCurrentSection(){
+  if(!confirm('Delete this section?'))return;
+  siteData.sections.splice(currentSectionIdx,1);
+  saveSite();
+  showSectionsModal();
+}
+
+// ── DESIGN ────────────────────────────────────────────────────────────────────
+function previewDesign(){
+  document.documentElement.style.setProperty('--u-primary',ge('d-primary').value);
+  ge('d-primary-hex').value=ge('d-primary').value;
+}
+function applyDesign(){
+  siteData.design.primary=ge('d-primary').value;
+  siteData.design.bg=ge('d-bg').value;
+  saveSite();closeModal();
+}
+function setColor(c){ge('d-primary').value=c;ge('d-primary-hex').value=c;previewDesign();}
+function setBG(c){ge('d-bg').value=c;ge('d-bg-hex').value=c;}
+
+// ── SETTINGS ──────────────────────────────────────────────────────────────────
+function loadSettings(){
+  const s=siteData.settings;
+  ge('s-title').value=s.title||'';ge('s-name').value=s.name||'';
+  ge('s-tagline').value=s.tagline||'';ge('s-footer').value=s.footer||'';
+  ge('s-desc').value=s.desc||'';ge('s-keywords').value=s.keywords||'';
+}
+function saveSettings(){
+  siteData.settings.title=ge('s-title').value;
+  siteData.settings.name=ge('s-name').value;
+  siteData.settings.tagline=ge('s-tagline').value;
+  siteData.settings.footer=ge('s-footer').value;
+  siteData.settings.desc=ge('s-desc').value;
+  siteData.settings.keywords=ge('s-keywords').value;
+  saveSite();closeModal();toast('Settings saved!');
+}
+function stTab(el,id){
+  document.querySelectorAll('#m-settings .m-tab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('#m-settings .m-pane').forEach(p=>p.classList.remove('on'));
+  el.classList.add('on');ge(id).classList.add('on');
+}
+
+// ── DOMAIN ────────────────────────────────────────────────────────────────────
+function copyCNAME(){
+  const d=ge('d-domain').value.trim();
+  if(!d){toast('Enter your domain first!');return;}
+  navigator.clipboard.writeText(d).then(()=>toast('Domain copied! Create CNAME file with this content.'));
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────────
+function toast(m='Done!'){
+  const t=ge('toast');t.textContent=m;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+renderSite();
+
+// Show lock icon if not unlocked
+ge('unlock-btn').classList.add('locked');
+ge('unlock-btn').textContent='🔒';
+
+// Enter key on password field
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape')closeModal();
+});
+</script>
+</body>
+</html>
